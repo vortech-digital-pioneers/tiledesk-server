@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router({mergeParams: true});
 var Department = require("../models/department");
+var Request = require("../models/request");
 var departmentService = require("../services/departmentService");
 var departmentEvent = require("../event/departmentEvent");
 
@@ -92,15 +93,31 @@ router.delete('/:departmentid', [passport.authenticate(['basic', 'jwt'], { sessi
 });
 
 
-router.get('/:departmentid/operators', function (req, res) {
-  winston.info("Getting department operators");
+router.get('/:departmentid/operators', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('agent')], async (req, res) => {
+  winston.debug("Getting department operators req.projectid: "+req.projectid);
   // getOperators(departmentid, projectid, nobot) {
-  departmentService.getOperators(req.params.departmentid, req.projectid, req.query.nobot).then(function (operatorsResult) {
+  var operatorsResult = await departmentService.getOperators(req.params.departmentid, req.projectid, req.query.nobot);
+  winston.debug("Getting department operators operatorsResult", operatorsResult);
+
+  operatorsResult.available_agents_request  = [];
+
+  if (operatorsResult && operatorsResult.available_agents && operatorsResult.available_agents.length > 0) {
+    var query = {id_project: req.projectid, status: {$lt:1000}};      
+    // asyncForEach(operatorsResult.available_agents, async (aa) => {
+    for (const aa of operatorsResult.available_agents) {
+      query.participants = aa.id_user._id.toString();// attento qui
+      winston.debug("department operators query:" , query);
+      var count =  await Request.countDocuments(query);
+      winston.debug("department operators count: "+ count);
+      operatorsResult.available_agents_request.push({project_user: aa, openRequetsCount : count});
+    }
+  }
+  
     return res.json(operatorsResult);
-  }).catch(function (err) {
-    winston.error('Error getting the department operators ', err);
-    return res.status(500).send({ success: false, msg: 'Error getting departments operatotors.' });
-  });
+  // }).catch(function (err) {
+  //   winston.error('Error getting the department operators ', err);
+  //   return res.status(500).send({ success: false, msg: 'Error getting departments operatotors.' });
+  // });
 });
 
 // START - GET MY DEPTS
@@ -171,7 +188,7 @@ router.get('/:departmentid/operators', function (req, res) {
 // ======================== ./END - GET MY DEPTS ========================
 
 // GET ALL DEPTS (i.e. NOT FILTERED FOR STATUS and WITH AUTHENTICATION (USED BY THE DASHBOARD)
-router.get('/allstatus', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRoleOrType('agent', 'bot')], function (req, res) {
+router.get('/allstatus', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRoleOrTypes('agent', ['bot','subscription'])], function (req, res) {
 
   winston.debug("## GET ALL DEPTS req.project.isActiveSubscription ", req.project.isActiveSubscription)
   winston.debug("## GET ALL DEPTS req.project.trialExpired ", req.project.trialExpired)
