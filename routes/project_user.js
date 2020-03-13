@@ -184,14 +184,48 @@ router.post('/invite', [passport.authenticate(['basic', 'jwt'], { session: false
   });
 });
 
+
+// router.put('/', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('agent')], function (req, res) {
+
+//   winston.debug("projectuser put", req.body);
+
+//   var update = {};
+  
+//   update.user_available = req.body.user_available;
+//   update.max_served_chat = req.body.max_served_chat;
+//   update.attributes = req.body.attributes;
+
+
+//   Project_user.findByIdAndUpdate(req.projectuser.id, update,  { new: true, upsert: true }, function (err, updatedProject_user) {
+//     if (err) {
+//       winston.error("Error gettting project_user for update", err);
+//       return res.status(500).send({ success: false, msg: 'Error updating object.' });
+//     }
+//       updatedProject_user.populate({path:'id_user', select:{'firstname':1, 'lastname':1}},function (err, updatedProject_userPopulated){                
+//           authEvent.emit('project_user.update', {updatedProject_userPopulated:updatedProject_userPopulated, req: req});
+//       });
+    
+
+//     res.json(updatedProject_user);
+//   });
+// });
+
 router.put('/', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('agent')], function (req, res) {
 
-  winston.info("qui", req.body);
+  winston.debug("projectuser patch", req.body);
 
   var update = {};
   
-  update.user_available = req.body.user_available;
-  update.attributes = req.body.attributes;
+  if (req.body.user_available!=undefined) {
+    update.user_available = req.body.user_available;
+  }
+  
+  if (req.body.max_served_chat!=undefined) {
+    update.max_served_chat = req.body.max_served_chat;
+  }
+  if (req.body.attributes!=undefined) {
+    update.attributes = req.body.attributes;
+  }
 
 
   Project_user.findByIdAndUpdate(req.projectuser.id, update,  { new: true, upsert: true }, function (err, updatedProject_user) {
@@ -208,15 +242,55 @@ router.put('/', [passport.authenticate(['basic', 'jwt'], { session: false }), va
   });
 });
 
-router.put('/:project_userid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('admin')], function (req, res) {
+// router.put('/:project_userid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('admin')], function (req, res) {
+
+//   winston.info("project_userid update", req.body);
+
+//   var update = {};
+  
+//   update.role = req.body.role;
+//   update.user_available = req.body.user_available;
+//   update.max_served_chat = req.body.max_served_chat;
+//   update.attributes = req.body.attributes;
+
+//   winston.info("project_userid update", update);
+
+//   Project_user.findByIdAndUpdate(req.params.project_userid, update, { new: true, upsert: true }, function (err, updatedProject_user) {
+//     if (err) {
+//       winston.error("Error gettting project_user for update", err);
+//       return res.status(500).send({ success: false, msg: 'Error updating object.' });
+//     }
+//       updatedProject_user.populate({path:'id_user', select:{'firstname':1, 'lastname':1}},function (err, updatedProject_userPopulated){                
+//           authEvent.emit('project_user.update', {updatedProject_userPopulated:updatedProject_userPopulated, req: req});
+//       });
+    
+
+//     res.json(updatedProject_user);
+//   });
+// });
+
+
+router.put('/:project_userid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRoleOrTypes('admin', ['subscription'])], function (req, res) {
 
   winston.info("project_userid update", req.body);
 
   var update = {};
   
-  update.role = req.body.role;
-  update.user_available = req.body.user_available;
-  update.attributes = req.body.attributes;
+  if (req.body.role!=undefined) {
+    update.role = req.body.role;
+  }
+
+  if (req.body.user_available!=undefined) {
+    update.user_available = req.body.user_available;
+  }
+
+  if (req.body.max_served_chat!=undefined) {
+    update.max_served_chat = req.body.max_served_chat;
+  }
+
+  if (req.body.attributes!=undefined) {
+    update.attributes = req.body.attributes;
+  }
 
   winston.info("project_userid update", update);
 
@@ -255,7 +329,7 @@ router.delete('/:project_userid', [passport.authenticate(['basic', 'jwt'], { ses
   });
 });
 
-router.get('/:project_userid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('agent')], function (req, res) {
+router.get('/:project_userid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRoleOrTypes('agent', ['subscription'])], function (req, res) {
   // router.get('/details/:project_userid', function (req, res) {
   // winston.debug("PROJECT USER ROUTES - req projectid", req.projectid);
   Project_user.findOne({ _id: req.params.project_userid, id_project: req.projectid}).
@@ -278,7 +352,7 @@ router.get('/:project_userid', [passport.authenticate(['basic', 'jwt'], { sessio
 /**
  * GET PROJECT-USER BY PROJECT ID AND CURRENT USER ID 
 //  */
- router.get('/users/:user_id', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('agent')], function (req, res, next) {
+ router.get('/users/:user_id', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRoleOrTypes('agent', ['subscription'])], function (req, res, next) {
    winston.debug("--> users USER ID ", req.params.user_id);
    // project_user_qui
    Project_user.find({ id_user: req.params.user_id, id_project: req.projectid }).

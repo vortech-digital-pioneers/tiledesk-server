@@ -144,7 +144,11 @@ roundRobin(operatorSelectedEvent) {
 
           // operatorSelectedEvent.operators = [{id_user: nextOperator.id_user}];
           operatorSelectedEvent.operators = [nextOperator];
+
+          operatorSelectedEvent.lastOperatorId = lastOperatorId;
+          operatorSelectedEvent.lastRequest = lastRequest;
           operatorSelectedEvent.lastOperatorIndex = lastOperatorIndex;
+
 
           return resolve(operatorSelectedEvent);
       });
@@ -223,6 +227,7 @@ getOperators(departmentid, projectid, nobot) {
 
               // console.log("D -> [ OPERATORS - BOT IS DEFINED ] -> AVAILABLE PROJECT-USERS: ", _available_agents);
 
+              // here subscription notifier??
               return resolve ({ department: department, available_agents: _available_agents, agents: project_users, id_bot:department.id_bot, operators: [{ id_user: 'bot_' + department.id_bot }] });
             }).catch(function (error) {
 
@@ -323,10 +328,13 @@ getOperators(departmentid, projectid, nobot) {
               }
 
               let objectToReturn = { available_agents: _available_agents, agents: project_users, operators: selectedoperator, department: department, group: group, id_project: projectid };
-              departmentEvent.emit('operator.select', objectToReturn);
 
               that.roundRobin(objectToReturn).then(function(objectToReturnRoundRobin){
-                return resolve(objectToReturnRoundRobin);
+
+                departmentEvent.emit('operator.select', {result:objectToReturnRoundRobin, resolve: resolve, reject: reject});
+
+                //is resolved by departmentEvent or SubscriptionNotifier
+                // return resolve(objectToReturnRoundRobin);
               });
               
 
@@ -340,7 +348,9 @@ getOperators(departmentid, projectid, nobot) {
             });
            
           } else {
-            return resolve({ available_agents: [], agents: [], operators: [] })
+            // here subscription notifier??
+            var objectToReturn = { available_agents: [], agents: [], operators: [] };
+            return resolve(objectToReturn);
           }
 
         })
@@ -378,10 +388,18 @@ getOperators(departmentid, projectid, nobot) {
           }
 
           let objectToReturn = { available_agents: _available_agents, agents: project_users, operators: selectedoperator, department: department, id_project: projectid };
-          departmentEvent.emit('operator.select', objectToReturn);
 
-          that.roundRobin(objectToReturn).then(function(objectToReturnRoundRobin){
-            return resolve(objectToReturnRoundRobin);
+          that.roundRobin(objectToReturn).then(function(objectToReturnRoundRobin) {
+
+            departmentEvent.emit('operator.select', {result:objectToReturnRoundRobin, resolve: resolve, reject: reject});
+
+            // attento qui
+            // if (objectToReturnRoundRobin.department._id == "5e5d40b2bd0a9b00179ff3cf" ) {
+            //   objectToReturnRoundRobin.operators = [];
+            // }
+
+            //is resolved by departmentEvent or SubscriptionNotifier
+            // return resolve(objectToReturnRoundRobin);
           });
           
         }).catch(function (error) {
@@ -394,7 +412,9 @@ getOperators(departmentid, projectid, nobot) {
 
        
       } else {
-        return resolve({ available_agents: [], agents: [], operators: [] })
+        // here subscription notifier??
+        let objectToReturn = { available_agents: [], agents: [], operators: [] };
+        return resolve(objectToReturn);
       }
 
     });

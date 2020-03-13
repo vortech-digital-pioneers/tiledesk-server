@@ -79,17 +79,56 @@ router.post('/', [passport.authenticate(['basic', 'jwt'], { session: false }), v
 });
 
 router.put('/:projectid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('admin')], function (req, res) {
-  winston.debug('UPDATE PROJECT REQ BODY ', req.body);
+  winston.info('UPDATE PROJECT REQ BODY ', req.body);
 
   var update = {};
   
-  update.name = req.body.name;
-  update.activeOperatingHours = req.body.activeOperatingHours;
-  update.operatingHours = req.body.operatingHours;
-  update.settings = req.body.settings;
-  update.widget = req.body.widget;
-  update.versions = req.body.versions;
-  update.channels = req.body.channels;
+//like patch
+  if (req.body.name!=undefined) {
+    update.name = req.body.name;
+  }
+
+  if (req.body.activeOperatingHours!=undefined) {
+    update.activeOperatingHours = req.body.activeOperatingHours;
+  }
+  
+  if (req.body.operatingHours!=undefined) {
+    update.operatingHours = req.body.operatingHours;
+  }
+  
+  if (req.body.settings!=undefined) {
+    update.settings = req.body.settings;
+  }
+  if (req.body["settings.email.autoSendTranscriptToRequester"]!=undefined) {
+    update["settings.email.autoSendTranscriptToRequester"] = req.body["settings.email.autoSendTranscriptToRequester"];
+  }
+
+  if (req.body["settings.max_agent_served_chat"]!=undefined) {
+    update["settings.max_agent_served_chat"] = req.body["settings.max_agent_served_chat"];
+  }
+
+  if (req.body["settings.reassignment_delay"]!=undefined) {
+    update["settings.reassignment_delay"] = req.body["settings.reassignment_delay"];
+  }
+
+  if (req.body["settings.automatic_idle_chats"]!=undefined) {
+    update["settings.automatic_idle_chats"] = req.body["settings.automatic_idle_chats"];
+  }
+  
+  if (req.body.widget!=undefined) {
+    update.widget = req.body.widget;
+  }
+
+  if (req.body.versions!=undefined) {
+    update.versions = req.body.versions;
+  }
+  
+  if (req.body.channels!=undefined) {
+    update.channels = req.body.channels; 
+  }
+  
+
+  winston.info('UPDATE PROJECT REQ BODY ', update);
 
 
 
@@ -97,6 +136,68 @@ router.put('/:projectid', [passport.authenticate(['basic', 'jwt'], { session: fa
     if (err) {
       winston.error('Error putting project ', err);
       return res.status(500).send({ success: false, msg: 'Error updating object.' });
+    }
+    projectEvent.emit('project.update', updatedProject );
+    res.json(updatedProject);
+  });
+});
+
+router.patch('/:projectid', [passport.authenticate(['basic', 'jwt'], { session: false }), validtoken, roleChecker.hasRole('admin')], function (req, res) {
+  winston.debug('PATCH PROJECT REQ BODY ', req.body);
+
+  var update = {};
+  
+  if (req.body.name!=undefined) {
+    update.name = req.body.name;
+  }
+
+  if (req.body.activeOperatingHours!=undefined) {
+    update.activeOperatingHours = req.body.activeOperatingHours;
+  }
+  
+  if (req.body.operatingHours!=undefined) {
+    update.operatingHours = req.body.operatingHours;
+  }
+  
+  if (req.body.settings!=undefined) {
+    update.settings = req.body.settings;
+  }
+  
+  if (req.body["settings.email.autoSendTranscriptToRequester"]!=undefined) {
+    update["settings.email.autoSendTranscriptToRequester"] = req.body["settings.email.autoSendTranscriptToRequester"];
+  }
+
+  if (req.body["settings.max_agent_served_chat"]!=undefined) {
+    update["settings.max_agent_served_chat"] = req.body["settings.max_agent_served_chat"];
+  }
+
+  if (req.body["settings.reassignment_delay"]!=undefined) {
+    update["settings.reassignment_delay"] = req.body["settings.reassignment_delay"];
+  }
+
+  if (req.body["settings.automatic_idle_chats"]!=undefined) {
+    update["settings.automatic_idle_chats"] = req.body["settings.automatic_idle_chats"];
+  }
+  
+  if (req.body.widget!=undefined) {
+    update.widget = req.body.widget;
+  }
+
+  if (req.body.versions!=undefined) {
+    update.versions = req.body.versions;
+  }
+  
+  if (req.body.channels!=undefined) {
+    update.channels = req.body.channels; 
+  }
+  
+ 
+  winston.info('UPDATE PROJECT REQ BODY ', update);
+
+  Project.findByIdAndUpdate(req.params.projectid, update, { new: true, upsert: true }, function (err, updatedProject) {
+    if (err) {
+      winston.error('Error putting project ', err);
+      return res.status(500).send({ success: false, msg: 'Error patching object.' });
     }
     projectEvent.emit('project.update', updatedProject );
     res.json(updatedProject);

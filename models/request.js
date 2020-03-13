@@ -175,7 +175,8 @@ var RequestSchema = new Schema({
   //tags List A list of tags associated with the conversation.
   tags: {
     type: Array,
-    required: false
+    required: false,
+    index: true
   },
   notes: [NoteSchema],
 
@@ -458,10 +459,10 @@ RequestSchema.index({ id_project: 1, type: -1 }); // schema level
 
 // RequestSchema.index({ requester_fullname: 'text', transcript: 'text', rating_message: 'text'},
 RequestSchema.index({transcript: 'text', rating_message: 'text'},
- {"name":"fulltext","default_language": "italian","language_override": "dummy"}); // schema level
+ {"name":"request_fulltext","default_language": "italian","language_override": "dummy"}); // schema level
 
 
- RequestSchema.index({ id_project: 1, status: 1, updatedAt: 1 }); // query for websocket
+RequestSchema.index({ id_project: 1, status: 1, updatedAt: 1 }); // query for websocket
 
  //
 //RequestSchema.index({name: 'transcript_fulltext', 'transcript': 'text'},);
