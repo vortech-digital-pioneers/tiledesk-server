@@ -31,22 +31,24 @@ class RequestService {
 
           // winston.debug("getOperators", result);
 
-          var status = 100;
+          var status = 100; //unserved
           var assigned_operator_id;
           var participants = [];
           
           if (result.operators && result.operators.length>0) {
             assigned_operator_id = result.operators[0].id_user;
-            status = 200;
+            status = 200; //served
             participants.push(assigned_operator_id.toString());
           }
            winston.info("routeInternal assigned_operator_id: "+ assigned_operator_id);
            winston.info("routeInternal status: "+ status);
 
-            request.status = status;
-            request.participants = participants;
-            request.department = result.department._id;
-            request.agents = result.agents;
+          request.status = status;
+          request.participants = participants;
+          request.department = result.department._id;
+          request.agents = result.agents;
+
+          request.waiting_time = undefined //reset waiting_time on reroute
                   
               return resolve(request);
                   
@@ -232,10 +234,10 @@ class RequestService {
           //  winston.debug("req status0", status);
            if (!status) {
             //  winston.debug("req status check", status);
-             status = 100;
+             status = 100; //unserved
              if (result.operators && result.operators.length>0) {
                assigned_operator_id = result.operators[0].id_user;
-               status = 200;
+               status = 200; //served
                participants.push(assigned_operator_id.toString());
              }
            }
@@ -668,9 +670,21 @@ class RequestService {
         if (err) {
           winston.error("Error setParticipantsByRequestId", err);
           return reject(err);
+        }       
+        if (!request) {
+          winston.error('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
+          return reject('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
         }
         request.participants = newparticipants;
+
+        if (request.participants.length>0) { 
+          request.status = 200; //served
+        } else {
+          request.status = 100; //unserved
+        }
         
+        request.waiting_time = undefined //reset waiting_time on reroute ????
+
         request.save(function(err, updatedRequest) {
           if (err) {
             winston.error("Error setParticipantsByRequestId", err);
@@ -716,10 +730,11 @@ class RequestService {
         .populate({path:'requester',populate:{path:'id_user'}})
         .exec( function(err, request) {
         if (err){
-          winston.error(err);
+          winston.error("Error adding participant ", err);
           return reject(err);
         }
         if (!request) {
+          winston.error('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
           return reject('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
         }
 
@@ -734,8 +749,11 @@ class RequestService {
           } else {
             request.status = 100;
           }
-
+// check error here
           request.save(function(err, savedRequest) {
+            if (err) {
+              winston.error(err);
+            }
             if (!err) {
               requestEvent.emit('request.update', savedRequest);
               requestEvent.emit('request.participants.join', {member:member, request: savedRequest});
@@ -768,11 +786,12 @@ class RequestService {
         .exec( function(err, request) {
         
         if (err){
-          winston.error(err);
+          winston.error("Error removing participant ", err);
           return reject(err);
         }
 
         if (!request) {
+          winston.error('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
           return reject('Request not found for request_id '+ request_id + ' and id_project '+ id_project);
         }
 

@@ -158,7 +158,7 @@ module.exports = function(passport) {
   winston.debug("passport opts: ", opts);
 
   passport.use(new JwtStrategy(opts, function(req, jwt_payload, done) {
-    winston.info("jwt_payload",jwt_payload);
+    winston.debug("jwt_payload",jwt_payload);
     // console.log("req",req);
     
 
@@ -179,7 +179,7 @@ module.exports = function(passport) {
     const subject = jwt_payload.sub;
     winston.debug("passport subject: " + subject);
 
-    winston.info("passport identifier: " + identifier + " subject " + subject);
+    winston.debug("passport identifier: " + identifier + " subject " + subject);
 
     var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
     winston.debug("fullUrl:"+ fullUrl);
@@ -203,7 +203,7 @@ module.exports = function(passport) {
             return done(err, false);
           }
           if (faq_kb) {
-            winston.info("Passport JWT bot user", faq_kb);
+            winston.debug("Passport JWT bot user", faq_kb);
             return done(null, faq_kb);
           } else {
             winston.info("Passport JWT bot not user");
@@ -220,7 +220,7 @@ module.exports = function(passport) {
           return done(err, false);
         }
         if (subscription) {
-          winston.info("Passport JWT subscription user", subscription);
+          winston.debug("Passport JWT subscription user", subscription);
           return done(null, subscription);
         } else {
           winston.info("Passport JWT subscription not user");
@@ -232,9 +232,9 @@ module.exports = function(passport) {
     
      
         if (jwt_payload) {
-          winston.info("Passport JWT userexternal", jwt_payload);
+          winston.debug("Passport JWT userexternal", jwt_payload);
           var userM = UserUtil.decorateUser(jwt_payload);
-          winston.info("Passport JWT userexternal userM", userM);
+          winston.debug("Passport JWT userexternal userM", userM);
           return done(null, userM );
         }  else {
           var err = {msg: "No jwt_payload passed. Its required"};
@@ -246,9 +246,9 @@ module.exports = function(passport) {
     
      
         if (jwt_payload) {
-          winston.info("Passport JWT guest", jwt_payload);
+          winston.debug("Passport JWT guest", jwt_payload);
           var userM = UserUtil.decorateUser(jwt_payload);
-          winston.info("Passport JWT guest userM", userM);
+          winston.debug("Passport JWT guest userM", userM);
           return done(null, userM );
         }  else {
           var err = {msg: "No jwt_payload passed. Its required"};
@@ -260,14 +260,14 @@ module.exports = function(passport) {
       winston.debug("Passport JWT generic user");
       User.findOne({_id: identifier}, function(err, user) {
           if (err) {
-            winston.info("Passport JWT generic err", err);
+            winston.error("Passport JWT generic err", err);
             return done(err, false);
           }
           if (user) {
-            winston.info("Passport JWT generic user", user);
+            winston.debug("Passport JWT generic user", user);
             return done(null, user);
           } else {
-            winston.info("Passport JWT generic not user");
+            winston.debug("Passport JWT generic not user");
             return done(null, false);
           }
       });

@@ -26,6 +26,12 @@ var SubscriptionSchema = new Schema({
     required: true,
     index: true
   },
+  global: {
+    type: Boolean,
+    default: false,
+    select: false,
+    index: true
+  },
   createdBy: {
     type: String,
     required: true
@@ -35,6 +41,7 @@ var SubscriptionSchema = new Schema({
 }
 );
 
+SubscriptionSchema.index({ id_project: 1, event: 1, target: 1  }, { unique: true }); 
 
 var subscription = mongoose.model('subscription', SubscriptionSchema);
 
